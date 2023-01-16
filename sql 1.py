@@ -27,7 +27,7 @@ def sql_oppgave2():
     df = pd.read_csv("Postnummerregister1.csv")
     
     # Create table if it doesn't already exist
-    df.to_sql('name', con, if_exists='append',index=False, dtype={'Postnummer': 'VARCHAR(20)',
+    df.to_sql('post', con, if_exists='append',index=False, dtype={'Postnummer': 'VARCHAR(20)',
                                                                 'Poststed': 'VARCHAR(255)',
                                                                 'Kommunenummer': 'VARCHAR(20)',
                                                                 'Kommunenavn': 'VARCHAR(255)',
@@ -36,7 +36,7 @@ def sql_oppgave2():
     # Retrieve and print the data from the table
     with con:
         cur = con.cursor()
-        cur.execute("SELECT * FROM name")
+        cur.execute("SELECT * FROM post")
         rows = cur.fetchall()
         for row in rows:
             print(row)
