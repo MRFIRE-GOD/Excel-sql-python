@@ -8,8 +8,12 @@ conn = sqlite3.connect("tes-kundeliste.db")
 cursor = conn.cursor()
 
     # lage  tables
+
 cursor.execute("CREATE TABLE kundepost (Postnummer INTEGER PRIMARY KEY, Poststed TEXT, Kommunenummer  TEXT, Kommunenavn TEXT, Kategori TEXT)")
 cursor.execute("CREATE TABLE kundeinfo (fname TEXT, ename TEXT, epost TEXT, tlf TEXT, postnummer TEXT)")
+
+    cursor.execute("CREATE TABLE kundepost (Postnummer INTEGER PRIMARY KEY, Poststed TEXT, Kommunenummer  TEXT, Kommunenavn TEXT, Kategori TEXT)")
+    cursor.execute("CREATE TABLE kundeinfo (fname TEXT, ename TEXT, epost TEXT, tlf TEXT, postnummer TEXT)"
 
 
     # lese data fra Postnummerregister.csv filen
