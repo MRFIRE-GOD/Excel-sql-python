@@ -7,7 +7,7 @@ cursor = conn.cursor()
 # Opprett tabellene
 cursor.execute("CREATE TABLE kundeliste (kundenr INTEGER PRIMARY KEY, navn TEXT, adresse TEXT)")
 cursor.execute("CREATE TABLE kundeinfo (kundenr INTEGER PRIMARY KEY, telefonnr TEXT, epost TEXT)")
-cursor.execute("CREATE TABLE postnummer_tabell (postnr INTEGER PRIMARY KEY, poststed TEXT)")
+
 
 # Les dataene fra filen
 with open("data.txt", "r") as file:
@@ -45,3 +45,5 @@ print("Adresse: ", kunde_data[2])
 print("Telefonnr: ", kundeinfo_data[1])
 print("E-post: ", kundeinfo_data[2])
 print("Postnummer: ", kunde_data[2])
+
+conn.close()
