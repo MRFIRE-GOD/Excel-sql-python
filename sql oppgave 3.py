@@ -1,47 +1,83 @@
 import sqlite3
+import csv
 
-# Opprett forbindelse til databasen
-conn = sqlite3.connect("kundeliste.db")
-cursor = conn.cursor()
+def create_tables():
+    # database
+    conn = sqlite3.connect("kundeliste.db")
+    cursor = conn.cursor()
 
-# Opprett tabellene
-cursor.execute("CREATE TABLE kundeliste (kundenr INTEGER PRIMARY KEY, navn TEXT, adresse TEXT)")
-cursor.execute("CREATE TABLE kundeinfo (kundenr INTEGER PRIMARY KEY, telefonnr TEXT, epost TEXT)")
-cursor.execute("CREATE TABLE postnummer_tabell (postnr INTEGER PRIMARY KEY, poststed TEXT)")
+    # lage  kundeinfo table
+    cursor.execute('''CREATE TABLE kundeinfo (
+                        kundenr INTEGER PRIMARY KEY,
+                        fname TEXT,
+                        ename TEXT,
+                        epost TEXT,
+                        tlf TEXT,
+                        postnummer INTEGER,
+                        FOREIGN KEY (postnummer) REFERENCES postnummer_tabell(postnummer)
+                    )''')
 
-# Les dataene fra filen
-with open("data.txt", "r") as file:
-    data = file.readlines()
-    for line in data:
-        line = line.strip().split(",")
-        kundenr = line[0]
-        navn = line[1]
-        adresse = line[2]
-        telefonnr = line[3]
-        epost = line[4]
-        postnr = line[5]
-        poststed = line[6]
+    # lage postnummer_tabell table
+    cursor.execute('''CREATE TABLE postnummer_tabell (
+                        postnummer INTEGER PRIMARY KEY,
+                        poststed TEXT,
+                        kommunenummer  TEXT,
+                        kommunenavn TEXT,
+                        kategori TEXT
+                    )''')
+
+    
+    conn.commit()
+    conn.close()
+
+def populate_tables():
+    # kontakte til database
+    conn = sqlite3.connect("kundeliste.db")
+    cursor = conn.cursor()
+
+    # lese data fra Postnummerregister.csv 
+    with open('Postnummerregister.csv', 'r') as postnummer_file:
+        postnummer_reader = csv.reader(postnummer_file)
         
-        # Legg til dataene i tabellene
-        cursor.execute("INSERT INTO kundeliste VALUES (?,?,?)", (kundenr, navn, adresse))
-        cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?)", (kundenr, telefonnr, epost))
-        cursor.execute("INSERT INTO postnummer_tabell VALUES (?,?)", (postnr, poststed))
+        next(postnummer_reader)
+        for row in postnummer_reader:
+            # legg til data til postnummer_tabell 
+            cursor.execute("INSERT INTO postnummer_tabell VALUES (?,?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4], row[5]))
 
-# Spør brukeren om kundenummer
-kundenr = input("Skriv inn kundenummer: ")
+    # lese data fra randoms.csv 
+    with open('randoms.csv', 'r') as kundeinfo_file:
+        kundeinfo_reader = csv.reader(kundeinfo_file)
+        # row
+        next(kundeinfo_reader)
+        for row in kundeinfo_reader:
+            # legge til data til kundeinfo 
+            cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4], row[5]))
 
-# Hent dataene om kunden fra tabellene
-cursor.execute("SELECT * FROM kundeliste WHERE kundenr=?", (kundenr,))
-kunde_data = cursor.fetchone()
-cursor.execute("SELECT * FROM kundeinfo WHERE kundenr=?", (kundenr,))
-kundeinfo_data = cursor.fetchone()
-cursor.execute("SELECT poststed FROM postnummer_tabell WHERE postnr=?", (kunde_data[2],))
-poststed_data = cursor.fetchone()
+    # 
+    conn.commit()
+    conn.close()
 
-# Vis dataene om kunden
-print("Kundenummer: ", kundenr)
-print("Navn: ", kunde_data[1])
-print("Adresse: ", kunde_data[2])
-print("Telefonnr: ", kundeinfo_data[1])
-print("E-post: ", kundeinfo_data[2])
-print("Postnummer: ", kunde_data[2])
+def get_customer_info():
+    # kontakte til  database
+    conn = sqlite3.connect("kundeliste.db")
+    cursor = conn.cursor()
+
+    # spøre om kunde nr
+    customer_number = input("Hva er ditt kunde NR: ")
+
+    # få kunde nr info fra database
+    cursor.execute('''SELECT kundeinfo.fname, kundeinfo.ename, kundeinfo.epost, kundeinfo.tlf, postnummer_tabell.poststed, postnummer_tabell.kommunenavn
+                      FROM kundeinfo
+                      JOIN postnummer_tabell ON kundeinfo.postnummer = postnummer_tabell.postnummer
+                      WHERE kundeinfo.kundenr = ?''', (customer_number,))
+
+    # printe resultate
+    results = cursor.fetchall()
+    for row in results:
+        print(row)
+
+    conn.commit()
+    conn.close()
+create_tables()
+populate_tables()
+get_customer_info()
