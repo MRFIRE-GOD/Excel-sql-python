@@ -32,7 +32,7 @@ def create_tables():
 
 def populate_tables():
     # Connect to the database
-    conn = sqlite3.connect("kundeliste.db")
+    conn = sqlite3.connect("test-kundeliste.db")
     cursor = conn.cursor()
 
     # Read data from Postnummerregister.csv file
@@ -42,7 +42,7 @@ def populate_tables():
         next(postnummer_reader)
         for row in postnummer_reader:
             # Add data to postnummer_tabell table
-            cursor.execute("INSERT INTO postnummer_tabell VALUES (?,?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4], row[5]))
+            cursor.execute("INSERT INTO postnummer_tabell VALUES (?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4]))
 
     # Read data from randoms.csv file
     with open('randoms.csv', 'r') as kundeinfo_file:
@@ -59,7 +59,7 @@ def populate_tables():
 
 def get_customer_info():
     # Connect to the database
-    conn = sqlite3.connect("kundeliste.db")
+    conn = sqlite3.connect("test-kundeliste.db")
     cursor = conn.cursor()
 
     # Ask the user for customer number
@@ -69,15 +69,26 @@ def get_customer_info():
     cursor.execute('''SELECT kundeinfo.fname, kundeinfo.ename, kundeinfo.epost, kundeinfo.tlf, postnummer_tabell.poststed, postnummer_tabell.kommunenavn
                       FROM kundeinfo
                       JOIN postnummer_tabell ON kundeinfo.postnummer = postnummer_tabell.postnummer
-                      WHERE kundeinfo.kundenr = ?''', (customer_number,))
+                      WHERE kundenr = ?''', (customer_number,))
 
-    # Fetch and print the results
-    results = cursor.fetchall()
-    for row in results:
-        print(row)
-    # Save the changes
-    conn.commit()
+    # Fetch the result
+    customer_info = cursor.fetchone()
+
+    if customer_info:
+        print("Kunde informasjon:")
+        print("Fornavn: ", customer_info[0])
+        print("Etternavn: ", customer_info[1])
+        print("E-post: ", customer_info[2])
+        print("Telefon: ", customer_info[3])
+        print("Poststed: ", customer_info[4])
+        print("Kommunenavn: ", customer_info[5])
+    else:
+        print("Ingen kunde funnet med kundenummer ", customer_number)
+
+    # Close the connection
     conn.close()
-create_tables()
-populate_tables()
-get_customer_info()
+
+if __name__ == '__main__':
+    create_tables()
+    populate_tables()
+    get_customer_info()
