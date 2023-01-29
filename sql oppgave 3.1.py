@@ -6,6 +6,15 @@ def create_tables():
     conn = sqlite3.connect("test-kundeliste.db")
     cursor = conn.cursor()
 
+   # Create the postnummer_tabell table
+    cursor.execute('''CREATE TABLE postnummer_tabell (
+                        postnummer INTEGER PRIMARY KEY,
+                        poststed TEXT,
+                        kommunenummer  TEXT,
+                        kommunenavn TEXT,
+                        kategori TEXT
+                    )''')
+
     # Create the kundeinfo table
     cursor.execute('''CREATE TABLE kundeinfo (
                         kundenr INTEGER PRIMARY KEY,
@@ -17,14 +26,6 @@ def create_tables():
                         FOREIGN KEY (postnummer) REFERENCES postnummer_tabell(postnummer)
                     )''')
 
-    # Create the postnummer_tabell table
-    cursor.execute('''CREATE TABLE postnummer_tabell (
-                        postnummer INTEGER PRIMARY KEY,
-                        poststed TEXT,
-                        kommunenummer  TEXT,
-                        kommunenavn TEXT,
-                        kategori TEXT
-                    )''')
 
     # Save the changes
     conn.commit()
@@ -50,12 +51,17 @@ def populate_tables():
         # Skip header row
         next(kundeinfo_reader)
         for row in kundeinfo_reader:
-            # Add data to kundeinfo table
-            cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4], row[5]))
+            try:
+                # Add data to kundeinfo table
+                cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4], row[5]))
+            except IndexError:
+                # Skip the row if there is an index error
+                continue
 
     # Save the changes
     conn.commit()
     conn.close()
+
 
 def get_customer_info():
     # Connect to the database
