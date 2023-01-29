@@ -45,18 +45,19 @@ def populate_tables():
             # Add data to postnummer_tabell table
             cursor.execute("INSERT INTO postnummer_tabell VALUES (?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4]))
 
-    # Read data from randoms.csv file
+  # Read data from randoms.csv file
     with open('randoms.csv', 'r') as kundeinfo_file:
         kundeinfo_reader = csv.reader(kundeinfo_file)
-        # Skip header row
+    # Skip header row
         next(kundeinfo_reader)
         for row in kundeinfo_reader:
-            try:
-                # Add data to kundeinfo table
+        # Check if the number of columns in the row matches the number of columns in the table
+            if len(row) == 6:
                 cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4], row[5]))
-            except IndexError:
-                # Skip the row if there is an index error
+            else:
+            # Skip the row if the number of columns doesn't match
                 continue
+
 
     # Save the changes
     conn.commit()
