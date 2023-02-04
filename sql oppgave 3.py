@@ -10,18 +10,15 @@ def create_tables():
     conn = sqlite3.connect("test-test-kundeliste.db")
     cursor = conn.cursor()
 
-    cursor.execute('''
-        CREATE TABLE postnummer_tabell (
+    cursor.execute('''CREATE TABLE postnummer_tabell (
             postnummer INTEGER PRIMARY KEY,
             poststed TEXT,
             kommunenummer  TEXT,
             kommunenavn TEXT,
             kategori TEXT
-        )
-    ''')
+        );''')
 
-    cursor.execute('''
-        CREATE TABLE kundeinfo (
+    cursor.execute('''CREATE TABLE kundeinfo (
             kundenr INTEGER PRIMARY KEY,
             fname TEXT,
             ename TEXT,
@@ -29,8 +26,7 @@ def create_tables():
             tlf TEXT,
             postnummer INTEGER,
             FOREIGN KEY (postnummer) REFERENCES postnummer_tabell(postnummer)
-        )
-    ''')
+        );''')
 
     conn.commit()
     conn.close()

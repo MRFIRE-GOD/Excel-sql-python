@@ -2,53 +2,50 @@ import sqlite3
 import csv
 
 def kundeinfo():
-
-
-# database
-    conn = sqlite3.connect("tes-kundeliste.db")
+    # Connect to the database
+    conn = sqlite3.connect("kundeliste.db")
     cursor = conn.cursor()
 
-    # lage  tables
-    cursor.execute("CREATE TABLE kundepost (Postnummer INTEGER PRIMARY KEY, Poststed TEXT, Kommunenummer  TEXT, Kommunenavn TEXT, Kategori TEXT)")
-    cursor.execute("CREATE TABLE kundeinfo (fname TEXT, ename TEXT, epost TEXT, tlf TEXT, postnummer TEXT)")
+    # Create tables
+    cursor.execute("CREATE TABLE kundeinfo (Kundenummer INTEGER PRIMARY KEY, Fornavn TEXT, Etternavn TEXT, Epost TEXT, Tlf TEXT, Postnummer INTEGER, FOREIGN KEY (Postnummer) REFERENCES postnummer_tabell(Postnummer))")
+    cursor.execute("CREATE TABLE postnummer_tabell (Postnummer INTEGER PRIMARY KEY, Poststed TEXT, Kommunenummer INTEGER, Kommunenavn TEXt, Kategori TEXT)")
 
-
-    # lese data fra Postnummerregister.csv filen
-    with open('Postnummerregister.csv', 'r') as kundepost_file:
-        kundepost_reader = csv.reader(kundepost_file)
-        # Skip header
-        next(kundepost_reader)
-        for row in kundepost_reader:
-            # legge tildata til kundeliste table
-            cursor.execute("INSERT INTO kundepost VALUES (?,?,?,?,?)", (row[0], row[1], row[2], row[3],row[4]))
-
-    # lese data fra randoms.csv file
+    # Read data from the "kundeinfo.csv" file
     with open('randoms.csv', 'r') as kundeinfo_file:
         kundeinfo_reader = csv.reader(kundeinfo_file)
-        # Skip header row
         next(kundeinfo_reader)
         for row in kundeinfo_reader:
-            # legge til data til kundeinfo table
-                cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4]))
+            if len(row) >= 6:
+                cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4], row[5]))
 
 
-    # lagre 
+    # Read data from the "postnummer_tabell.csv" file
+    with open('Postnummerregister.csv', 'r') as postnummer_file:
+        postnummer_reader = csv.reader(postnummer_file)
+        # Skip header row
+        next(postnummer_reader)
+        for row in postnummer_reader:
+            # Insert data into the "postnummer_tabell" table
+            cursor.execute("INSERT INTO postnummer_tabell VALUES (?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4]))
+
+    # Save changes to the database
     conn.commit()
 
-    # spøre kunder om customer number
-    customer_number = input("Hva er ditt kunde NR: ")
+    # Ask the user for a customer number
+    customer_number = input("Hva er ditt kundenummer: ")
 
-    # kunde info fra  database
-    cursor.execute("SELECT * FROM kundepost JOIN kundeinfo ON kundepost.kundenr = kundeinfo.kundenr JOIN postnummer_tabell ON kundepost.postnr = postnummer_tabell.postnr WHERE kundepost.kundenr=?", (customer_number,))
-
+    # Get customer information from the database
+    cursor.execute("SELECT * FROM kundeinfo JOIN postnummer_tabell ON kundeinfo.Postnummer = postnummer_tabell.Postnummer WHERE Kundenummer=?", (customer_number,))
     customer_info = cursor.fetchone()
-    print("Customer Information:")
-    print("Name: ", customer_info[1])
-    print("Address: ", customer_info[2])
-    print("Phone number: ", customer_info[3])
-    print("Email: ", customer_info[4])
-    print("Postal code: ", customer_info[5])
-    print("Postal town: ", customer_info[6])
+    print("Kundeinformasjon: ")
+    print("Fnavn: ", customer_info[1]) 
+    print("EtterNavn",customer_info[2])
+    print("Epost: ", customer_info[3])
+    print("Telefonnummer: ", customer_info[4])
+    print("Postnummer: ", customer_info[5])
+    print("Poststed: ", customer_info[6])
 
     # Close the connection
     conn.close()
+
+kundeinfo()
