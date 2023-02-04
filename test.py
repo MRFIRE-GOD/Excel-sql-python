@@ -1,53 +1,75 @@
 import sqlite3
 import csv
 
-# database
-conn = sqlite3.connect("kundeliste.db")
-cursor = conn.cursor()
+def create_tables():
+    # Connect to the database
+    conn = sqlite3.connect("test-kundeliste.db")
+    cursor = conn.cursor()
 
-# lage  tables
-cursor.execute("CREATE TABLE kundeliste (kundenr INTEGER PRIMARY KEY, navn TEXT, adresse TEXT)")
-cursor.execute("CREATE TABLE kundeinfo (kundenr INTEGER,telefonnr TEXT, epost TEXT, FOREIGN KEY (kundenr) REFERENCES kundeliste(kundenr))")
+    # Create the postnummer_tabell table
+    cursor.execute('''CREATE TABLE postnummer_tabell (
+                        postnummer INTEGER PRIMARY KEY,
+                        poststed TEXT,
+                        kommunenummer  TEXT,
+                        kommunenavn TEXT,
+                        kategori TEXT
+                    )''')
+
+    # Create the kundeinfo table
+    cursor.execute('''CREATE TABLE kundeinfo (
+                        kundenr INTEGER PRIMARY KEY,
+                        fname TEXT,
+                        ename TEXT,
+                        epost TEXT,
+                        tlf TEXT,
+                        postnummer INTEGER,
+                        FOREIGN KEY (postnummer) REFERENCES postnummer_tabell(postnummer)
+                    )''')
+
+    # Save the changes
+    conn.commit()
+    conn.close()
+
+def populate_tables():
+    # Connect to the database
+    conn = sqlite3.connect("test-kundeliste.db")
+    cursor = conn.cursor()
+
+    # Read data from Postnummerregister.csv file
+    with open('Postnummerregister.csv', 'r') as postnummer_file:
+        postnummer_reader = csv.reader(postnummer_file)
+        # Skip header
+        next(postnummer_reader)
+        for row in postnummer_reader:
+            if len(row) == 5:
+                postnummer = row[0]
+                # Check if postnummer already exists in the table
+                cursor.execute("SELECT * FROM postnummer_tabell WHERE postnummer=?", (postnummer,))
+                if not cursor.fetchone():
+                    # Add data to postnummer_tabell table
+                    cursor.execute("INSERT INTO postnummer_tabell VALUES (?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4]))
+
+    # Read data from randoms.csv file
+    with open('randoms.csv', 'r') as kundeinfo_file:
+        kundeinfo_reader = csv.reader(kundeinfo_file)
+        # Skip header row
+        next(kundeinfo_reader)
+        for row in kundeinfo_reader:
+            # Check if the number of columns in the row matches the number of columns in the table
+            if len(row) == 6:
+                cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4], row[5]))
+            else:
+                # Skip the row if the number of columns doesn't match
+                continue
+
+    # Save the changes
+    conn.commit()
+    conn.close()
 
 
-# lese data fra Postnummerregister.csv filen
-with open('Postnummerregister.csv', 'r') as kundeliste_file:
-    kundeliste_reader = csv.reader(kundeliste_file)
-    # Skip header
-    next(kundeliste_reader)
-    for row in kundeliste_reader:
-        # legge tildata til kundeliste table
-        cursor.execute("INSERT INTO kundeliste VALUES (?,?,?)", (row[0], row[1], row[2]))
+def get_customer_info():
+    # Connect to the database
+    conn = sqlite3.connect("test-kundeliste.db")
+    cursor = conn.cursor()
 
-# lese data fra randoms.csv file
-with open('randoms.csv', 'r') as kundeinfo_file:
-    kundeinfo_reader = csv.reader(kundeinfo_file)
-    # Skip header row
-    next(kundeinfo_reader)
-    for row in kundeinfo_reader:
-        # legge til data til kundeinfo table
-            cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?)", (row[0], row[1], row[2]))
-
-
-# lagre 
-conn.commit()
-
-# spøre kunder om customer number
-customer_number = input("Hva er ditt kunde NR: ")
-
-# kunde info fra  database
-cursor.execute("SELECT * FROM kundeliste JOIN kundeinfo ON kundeliste.kundenr = kundeinfo.kundenr JOIN kundeinfo ON kundeliste.postnr = kundeinfo.postnr WHERE kundeliste.kundenr=?", (customer_number,))
-
-
-customer_info = cursor.fetchone()
-print("Customer Information:")
-print("Name: ", customer_info[1])
-print("Address: ", customer_info[2])
-print("Phone number: ", customer_info[3])
-print("Email: ", customer_info[4])
-print("Postal code: ", customer_info[5])
-print("Postal town: ", customer_info[6])
-
-# Close the connection
-conn.close()
-
+    # Get customer information

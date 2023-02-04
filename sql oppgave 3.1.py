@@ -3,7 +3,7 @@ import csv
 
 def create_tables():
     # Connect to the database
-    conn = sqlite3.connect("test-kundeliste.db")
+    conn = sqlite3.connect("test-test-kundeliste.db")
     cursor = conn.cursor()
 
    # Create the postnummer_tabell table
@@ -42,26 +42,31 @@ def populate_tables():
         # Skip header
         next(postnummer_reader)
         for row in postnummer_reader:
-            # Add data to postnummer_tabell table
-            cursor.execute("INSERT INTO postnummer_tabell VALUES (?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4]))
+            if len(row) == 5:
+                postnummer = row[0]
+                # Check if postnummer already exists in the table
+                cursor.execute("SELECT * FROM postnummer_tabell WHERE postnummer=?", (postnummer,))
+                if not cursor.fetchone():
+                    # Add data to postnummer_tabell table
+                    cursor.execute("INSERT INTO postnummer_tabell VALUES (?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4]))
 
-  # Read data from randoms.csv file
+    # Read data from randoms.csv file
     with open('randoms.csv', 'r') as kundeinfo_file:
         kundeinfo_reader = csv.reader(kundeinfo_file)
-    # Skip header row
+        # Skip header row
         next(kundeinfo_reader)
         for row in kundeinfo_reader:
-        # Check if the number of columns in the row matches the number of columns in the table
+            # Check if the number of columns in the row matches the number of columns in the table
             if len(row) == 6:
                 cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4], row[5]))
             else:
-            # Skip the row if the number of columns doesn't match
+                # Skip the row if the number of columns doesn't match
                 continue
-
 
     # Save the changes
     conn.commit()
     conn.close()
+
 
 
 def get_customer_info():
