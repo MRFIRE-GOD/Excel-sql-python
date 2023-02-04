@@ -1,50 +1,80 @@
-import sqlite3
 import csv
+import xlrd 
 import pandas as pd
+import sqlite3
 
-def kundeinfo():
-    # Connect to the database
-    conn = sqlite3.connect("kundeliste.db")
-    cursor = conn.cursor()
+# Connect to the database
+conn = sqlite3.connect('kundeliste.db')
+cursor = conn.cursor()
 
+# Create the customer info table
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS kundeinfo (
+  kundenummer INT PRIMARY KEY,
+  navn TEXT NOT NULL,
+  adresse TEXT NOT NULL,
+  telefon INT NOT NULL
+)
+''')
 
-    # Create tables
-    cursor.execute("CREATE TABLE kundeinfo (Kundenummer INTEGER PRIMARY KEY, Fornavn TEXT, Etternavn TEXT, Epost TEXT, Tlf TEXT, Postnummer INTEGER, FOREIGN KEY (Postnummer) REFERENCES postnummer_tabell(Postnummer))")
-    cursor.execute("CREATE TABLE postnummer_tabell (Postnummer INTEGER PRIMARY KEY, Poststed TEXT, Kommunenummer INTEGER, Kommunenavn TEXt, Kategori TEXT)")
+# Read customer info from the xlsx file
+book = xlrd.open_workbook("kundeinfo.xlsx")
+sheet = book.sheet_by_index(0)
+for row_idx in range(1, sheet.nrows):
+    row = sheet.row(row_idx)
+    kundenummer = int(row[0].value)
+    navn = row[1].value
+    adresse = row[2].value
+    telefon = int(row[3].value)
+    cursor.execute("""
+        INSERT INTO kundeinfo (kundenummer, navn, adresse, telefon)
+        VALUES (?,?,?,?)
+        """, (kundenummer, navn, adresse, telefon))
 
-    # Read data from the "randoms2.xlsx" file
-    kundeinfo_df = pd.read_excel('randoms2.xlsx')
-    for index, row in kundeinfo_df.iterrows():
-        if len(row) >= 6:
-            cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?,?,?,?)", (int(row[0]), row[1], row[2], row[3], row[4], int(row[5])))
+# Create the postal code table
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS postnummer_tabell (
+  postnummer INT PRIMARY KEY,
+  poststed TEXT NOT NULL
+)
+''')
 
-    # Read data from the "Postnummerregister.csv" file
-    with open('Postnummerregister.csv', 'r') as postnummer_file:
-        postnummer_reader = csv.reader(postnummer_file)
-        # Skip header row
-        next(postnummer_reader)
-        for row in postnummer_reader:
-            # Insert data into the "postnummer_tabell" table
-            cursor.execute("INSERT INTO postnummer_tabell VALUES (?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4]))
+# Read postal codes from the csv file
+with open("postnummer_tabell.csv") as csvfile:
+    reader = csv.reader(csvfile)
+    next(reader)  # skip the header
+    for row in reader:
+        postnummer = int(row[0])
+        poststed = row[1]
+        cursor.execute("""
+            INSERT INTO postnummer_tabell (postnummer, poststed)
+            VALUES (?,?)
+            """, (postnummer, poststed))
 
-    # Save changes to the database
-    conn.commit()
+# Create the foreign key constraint
+cursor.execute('''
+ALTER TABLE kundeinfo 
+ADD FOREIGN KEY (postnummer) 
+REFERENCES postnummer_tabell(postnummer)
+''')
 
-    # Ask the user for a customer number
-    customer_number = input("Hva er ditt kundenummer: ")
+conn.commit()
 
-    # Get customer information from the database
-    cursor.execute("SELECT * FROM kundeinfo JOIN postnummer_tabell ON kundeinfo.Postnummer = postnummer_tabell.Postnummer WHERE Kundenummer=?", (customer_number,))
-    customer_info = cursor.fetchone()
-    print("Kundeinformasjon: ")
-    print("Fnavn: ", customer_info[1]) 
-    print("EtterNavn",customer_info[2])
-    print("Epost: ", customer_info[3])
-    print("Telefonnummer: ", customer_info[4])
-    print("Postnummer: ", customer_info[5])
-    print("Poststed: ", customer_info[6])
-
-    # Close the connection
-    conn.close()
-
-kundeinfo()
+# Query customer information based on customer number
+kundenummer = int(input("Enter customer number: "))
+cursor.execute("""
+    SELECT kundeinfo.kundenummer, navn, adresse, telefon, poststed
+    FROM kundeinfo
+    JOIN postnummer_tabell
+    ON kundeinfo.postnummer = postnummer_tabell.postnummer
+    WHERE kundeinfo.kundenummer=?
+    """, (kundenummer,))
+result = cursor.fetchone()
+if result:
+    print("Customer Number:", result[0])
+    print("Name:", result[1])
+    print("Address:", result[2])
+    print("Phone:", result[3])
+    print("Postal Code:", result[4])
+else:
+    print("Customer not found")
