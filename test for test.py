@@ -1,5 +1,6 @@
 import sqlite3
 import csv
+import pandas as pd
 
 def kundeinfo():
     # Connect to the database
@@ -10,16 +11,13 @@ def kundeinfo():
     cursor.execute("CREATE TABLE kundeinfo (Kundenummer INTEGER PRIMARY KEY, Fornavn TEXT, Etternavn TEXT, Epost TEXT, Tlf TEXT, Postnummer INTEGER, FOREIGN KEY (Postnummer) REFERENCES postnummer_tabell(Postnummer))")
     cursor.execute("CREATE TABLE postnummer_tabell (Postnummer INTEGER PRIMARY KEY, Poststed TEXT, Kommunenummer INTEGER, Kommunenavn TEXt, Kategori TEXT)")
 
-    # Read data from the "kundeinfo.csv" file
-    with open('randoms.csv', 'r') as kundeinfo_file:
-        kundeinfo_reader = csv.reader(kundeinfo_file)
-        next(kundeinfo_reader)
-        for row in kundeinfo_reader:
-            if len(row) >= 6:
-                cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?,?,?,?)", (row[0], row[1], row[2], row[3], row[4], row[5]))
+    # Read data from the "randoms2.xlsx" file
+    kundeinfo_df = pd.read_excel('randoms2.xlsx')
+    for index, row in kundeinfo_df.iterrows():
+        if len(row) >= 6:
+            cursor.execute("INSERT INTO kundeinfo VALUES (?,?,?,?,?,?)", (int(row[0]), row[1], row[2], row[3], row[4], int(row[5])))
 
-
-    # Read data from the "postnummer_tabell.csv" file
+    # Read data from the "Postnummerregister.csv" file
     with open('Postnummerregister.csv', 'r') as postnummer_file:
         postnummer_reader = csv.reader(postnummer_file)
         # Skip header row
