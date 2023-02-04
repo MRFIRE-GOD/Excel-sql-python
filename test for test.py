@@ -7,6 +7,7 @@ def kundeinfo():
     conn = sqlite3.connect("kundeliste.db")
     cursor = conn.cursor()
 
+
     # Create tables
     cursor.execute("CREATE TABLE kundeinfo (Kundenummer INTEGER PRIMARY KEY, Fornavn TEXT, Etternavn TEXT, Epost TEXT, Tlf TEXT, Postnummer INTEGER, FOREIGN KEY (Postnummer) REFERENCES postnummer_tabell(Postnummer))")
     cursor.execute("CREATE TABLE postnummer_tabell (Postnummer INTEGER PRIMARY KEY, Poststed TEXT, Kommunenummer INTEGER, Kommunenavn TEXt, Kategori TEXT)")
