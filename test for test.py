@@ -1,6 +1,7 @@
 import csv
 import xlrd 
-import pandas as pd
+import pandas
+import openpyxl
 import sqlite3
 
 # Connect to the database
@@ -18,7 +19,7 @@ CREATE TABLE IF NOT EXISTS kundeinfo (
 ''')
 
 # Read customer info from the xlsx file
-book = xlrd.open_workbook("kundeinfo.xlsx")
+book = xlrd.open_workbook("randoms2.xlsx")
 sheet = book.sheet_by_index(0)
 for row_idx in range(1, sheet.nrows):
     row = sheet.row(row_idx)
@@ -78,3 +79,5 @@ if result:
     print("Postal Code:", result[4])
 else:
     print("Customer not found")
+
+conn.close()
